@@ -15,7 +15,7 @@
 
 #define MAX_CLK 14
 #define MAX_CS 15
-#define MAX_DIN 12
+#define MAX_DIN 13
 
 static const struct
 {
