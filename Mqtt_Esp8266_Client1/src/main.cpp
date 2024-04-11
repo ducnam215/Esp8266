@@ -2,7 +2,15 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <Wire.h>
+#include <AHT20.h>
 #include <stdlib.h>
+
+#define Out_Red 13
+#define Out_Green 12
+
+long lastMsg = 0;
+float temperature = 0;
+float humidity = 0;
 
 // Khai báo biến `ssid` là một con trỏ kiểu char, chứa tên của mạng WiFi mà bạn muốn kết nối.
 const char *ssid = "Samsung Galaxy Z Flip4";
@@ -24,9 +32,7 @@ WiFiClient espClient;
 // Đối tượng này được khởi tạo với espClient làm tham số, điều này cho phép nó sử dụng kết nối WiFi đã thiết lập.
 PubSubClient client(espClient);
 
-long lastMsg = 0;
-float temperature = 0;
-float humidity = 0;
+AHT20 aht20;
 
 void setup_wifi()
 {
@@ -71,11 +77,33 @@ void callback(char *topic, byte *message, unsigned int length)
     // Kiểm tra chủ đề của tin nhắn và thực hiện hành động tương ứng.
     if (strcmp(topic, "esp8266/client1/led/red") == 0)
     {
+        Serial.print("Changing Room lamp to ");
+        if (messageTemp == "On")
+        {
+            digitalWrite(Out_Red, HIGH);
+            Serial.print("On");
+        }
+        else if (messageTemp == "Off")
+        {
+            digitalWrite(Out_Red, LOW);
+            Serial.print("Off");
+        }
     }
 
     // Làm tương tự như trên cho LED xanh lá.
     if (strcmp(topic, "esp8266/client1/led/green") == 0)
     {
+        Serial.print("Changing Room lamp to ");
+        if (messageTemp == "On")
+        {
+            digitalWrite(Out_Green, HIGH);
+            Serial.print("On");
+        }
+        else if (messageTemp == "Off")
+        {
+            digitalWrite(Out_Green, LOW);
+            Serial.print("Off");
+        }
     }
 }
 
@@ -113,8 +141,21 @@ void setup()
 {
     Serial.begin(115200); // Bắt đầu giao tiếp serial ở tốc độ baud rate 115200.
 
-    setup_wifi(); // Thực hiện cấu hình kết nối WiFi.
+    pinMode(Out_Red, OUTPUT);
+    pinMode(Out_Green, OUTPUT);
 
+    Wire.begin(); // Join I2C bus
+
+    // Check if the AHT20 will acknowledge
+    if (aht20.begin() == false)
+    {
+        Serial.println("AHT20 not detected. Please check wiring. Freezing.");
+        while (1)
+            ;
+    }
+    Serial.println("AHT20 acknowledged.");
+
+    setup_wifi(); // Thực hiện cấu hình kết nối WiFi.
     // Thiết lập thông tin máy chủ MQTT và gán hàm callback để xử lý tin nhắn đến.
     client.setServer(mqtt_server, mqtt_port); // Thiết lập máy chủ MQTT và cổng kết nối.
     client.setCallback(callback);             // Gán hàm callback để xử lý tin nhắn MQTT đến.
@@ -136,16 +177,23 @@ void loop()
     if (now - lastMsg > 500)
     {
         lastMsg = now; // Cập nhật thời điểm gửi tin nhắn lần cuối.
+                       // Chuyển đổi các giá trị nhiệt độ và độ ẩm sang chuỗi ký tự để gửi qua MQTT.
 
-        // Chuyển đổi các giá trị nhiệt độ và độ ẩm sang chuỗi ký tự để gửi qua MQTT.
-        static char temperatureTemp[7];
-        dtostrf(t, 6, 2, temperatureTemp); // Chuyển đổi nhiệt độ sang chuỗi ký tự.
+        // If a new measurement is available
+        if (aht20.available() == true)
+        {
+            // Get the new temperature and humidity value
+            temperature = aht20.getTemperature();
+            humidity = aht20.getHumidity();
 
-        static char humidityTemp[7];
-        dtostrf(h, 6, 2, humidityTemp); // Chuyển đổi độ ẩm sang chuỗi ký tự.
+            static char temperatureTemp[7];
+            dtostrf(temperature, 6, 2, temperatureTemp); // Chuyển đổi nhiệt độ sang chuỗi ký tự.
+            static char humidityTemp[7];
+            dtostrf(humidity, 6, 2, humidityTemp); // Chuyển đổi độ ẩm sang chuỗi ký tự.
 
-        // Gửi giá trị nhiệt độ và độ ẩm qua MQTT với các chủ đề tương ứng.
-        client.publish("esp8266/aht20/temperature", temperatureTemp);
-        client.publish("esp32/aht20/humidity", humidityTemp);
+            // Gửi giá trị nhiệt độ và độ ẩm qua MQTT với các chủ đề tương ứng.
+            client.publish("esp8266/client1/aht20/temperature", temperatureTemp);
+            client.publish("esp8266/client1/aht20/humidity", humidityTemp);
+        }
     }
 }

@@ -1,8 +1,22 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <max7219.h>
 #include <Wire.h>
 #include <stdlib.h>
+
+#define Btn_Red 16
+#define Btn_Green 17
+#define LEFT 0
+#define RIGHT 1
+
+long lastMsg = 0;
+float temperature = 0;
+float humidity = 0;
+
+uint8_t Value_Red, Value_Green;
+uint8_t Default_Red = 1, Default_Green = 1;
+uint8_t Count_Red = 0, Count_Green = 0;
 
 // Khai báo biến `ssid` là một con trỏ kiểu char, chứa tên của mạng WiFi mà bạn muốn kết nối.
 const char *ssid = "Samsung Galaxy Z Flip4";
@@ -17,16 +31,12 @@ const char *mqtt_username = "valianthead152";
 // Khai báo biến `mqtt_password` là một con trỏ kiểu char, chứa mật khẩu dùng để xác thực kết nối MQTT.
 // Lưu ý: Mật khẩu ở đây đã được ẩn đi vì lí do bảo mật.
 const char *mqtt_password = "test123";
-
 // Khởi tạo đối tượng espClient từ class WiFiClient, sử dụng để thiết lập kết nối WiFi.
 WiFiClient espClient;
 // Khởi tạo đối tượng client từ class PubSubClient, sử dụng để gửi và nhận tin nhắn MQTT.
 // Đối tượng này được khởi tạo với espClient làm tham số, điều này cho phép nó sử dụng kết nối WiFi đã thiết lập.
 PubSubClient client(espClient);
-
-long lastMsg = 0;
-float temperature = 0;
-float humidity = 0;
+MAX7219 max7219;
 
 void setup_wifi()
 {
@@ -69,13 +79,47 @@ void callback(char *topic, byte *message, unsigned int length)
     Serial.println(); // Kết thúc dòng hiện tại trên cổng Serial.
 
     // Kiểm tra chủ đề của tin nhắn và thực hiện hành động tương ứng.
-    if (strcmp(topic, "esp8266/client1/led/red") == 0)
+    if (strcmp(topic, "esp8266/client1/aht20/temperature") == 0)
     {
+        const char *messageArray = messageTemp.c_str();
+        // Kiểm tra độ dài của messageArray
+        int messageLength = strlen(messageArray);
+        // Đảm bảo là messageArray có độ dài nhỏ hơn hoặc bằng 6
+        if (messageLength <= 6)
+        {
+            // Khai báo một mảng char[6] để lưu trữ messageArray
+            char messageChar[6];
+            // Sao chép nội dung từ messageArray sang messageChar
+            strcpy(messageChar, messageArray);
+            max7219.Clear();
+            max7219.DisplayText(messageChar, RIGHT);
+        }
+        else
+        {
+            // Xử lý trường hợp độ dài messageArray lớn hơn 6 nếu cần thiết
+        }
     }
 
     // Làm tương tự như trên cho LED xanh lá.
-    if (strcmp(topic, "esp8266/client1/led/green") == 0)
+    if (strcmp(topic, "esp8266/client1/aht20/humidity") == 0)
     {
+        const char *messageArray = messageTemp.c_str();
+        // Kiểm tra độ dài của messageArray
+        int messageLength = strlen(messageArray);
+        // Đảm bảo là messageArray có độ dài nhỏ hơn hoặc bằng 6
+        if (messageLength <= 6)
+        {
+            // Khai báo một mảng char[6] để lưu trữ messageArray
+            char messageChar[6];
+            // Sao chép nội dung từ messageArray sang messageChar
+            strcpy(messageChar, messageArray);
+            max7219.Clear();
+            max7219.DisplayText(messageChar, LEFT);
+        }
+        else
+        {
+            // Xử lý trường hợp độ dài messageArray lớn hơn 6 nếu cần thiết
+        }
     }
 }
 
@@ -86,7 +130,7 @@ void reconnect()
     {
         Serial.print("Attempting MQTT connection...");
         // Tạo một ID client ngẫu nhiên để tránh xung đột khi kết nối.
-        String clientId = "ESP8266_Client1";
+        String clientId = "ESP8266_Client2";
         // clientId += String(random(0xffff), HEX); // ID được tạo dựa trên một giá trị ngẫu nhiên, giúp đảm bảo tính duy nhất.
 
         // Thử kết nối với MQTT broker sử dụng ID client, tên người dùng và mật khẩu.
@@ -94,8 +138,8 @@ void reconnect()
         {
             Serial.println("connected");
             // Nếu kết nối thành công, đăng ký lại các chủ đề cần thiết.
-            client.subscribe("esp8266/client1/led/red");
-            client.subscribe("esp8266/client1/led/green");
+            client.subscribe("esp8266/client1/aht20/temperature");
+            client.subscribe("esp8266/client1/aht20/humidity");
         }
         else
         {
@@ -112,9 +156,10 @@ void reconnect()
 void setup()
 {
     Serial.begin(115200); // Bắt đầu giao tiếp serial ở tốc độ baud rate 115200.
-
+    max7219.Begin();
+    pinMode(Btn_Green, INPUT);
+    pinMode(Btn_Red, INPUT);
     setup_wifi(); // Thực hiện cấu hình kết nối WiFi.
-
     // Thiết lập thông tin máy chủ MQTT và gán hàm callback để xử lý tin nhắn đến.
     client.setServer(mqtt_server, mqtt_port); // Thiết lập máy chủ MQTT và cổng kết nối.
     client.setCallback(callback);             // Gán hàm callback để xử lý tin nhắn MQTT đến.
@@ -127,25 +172,59 @@ void loop()
     {
         reconnect(); // Gọi hàm reconnect() để thực hiện kết nối lại với MQTT broker.
     }
-
     client.loop(); // Xử lý các gói tin MQTT đến và gửi đi trong thư viện PubSubClient.
 
-    long now = millis(); // Lấy thời gian hiện tại (tính bằng milliseconds) từ khi khởi động.
+    Value_Red = digitalRead(Btn_Red);
+    Value_Green = digitalRead(Btn_Green);
 
-    // Kiểm tra nếu đã đến thời điểm gửi tin nhắn MQTT tiếp theo (cách nhau 500ms).
-    if (now - lastMsg > 500)
+    // Check Button Red
+    if (Value_Red != Default_Red)
     {
-        lastMsg = now; // Cập nhật thời điểm gửi tin nhắn lần cuối.
+        if (Value_Red == 1)
+        {
+            Count_Red++;
+            if (Count_Red >= 2)
+            {
+                Count_Red = 0;
+            }
 
-        // Chuyển đổi các giá trị nhiệt độ và độ ẩm sang chuỗi ký tự để gửi qua MQTT.
-        static char temperatureTemp[7];
-        dtostrf(t, 6, 2, temperatureTemp); // Chuyển đổi nhiệt độ sang chuỗi ký tự.
+            if (Count_Red == 1)
+            {
+                client.publish("esp8266/client1/led/red", "On");
+            }
+            else
+            {
+                client.publish("esp8266/client1/led/red", "Off");
+            }
 
-        static char humidityTemp[7];
-        dtostrf(h, 6, 2, humidityTemp); // Chuyển đổi độ ẩm sang chuỗi ký tự.
+            delay(300); // Debounce delay
+        }
+        Default_Red = Value_Red;
+    }
 
-        // Gửi giá trị nhiệt độ và độ ẩm qua MQTT với các chủ đề tương ứng.
-        client.publish("esp8266/aht20/temperature", temperatureTemp);
-        client.publish("esp32/aht20/humidity", humidityTemp);
+    // Check Button Green
+    if (Value_Green != Default_Green)
+    {
+        if (Value_Green == 1)
+        {
+            Count_Green++;
+
+            if (Count_Green >= 2)
+            {
+                Count_Green = 0;
+            }
+
+            if (Count_Green == 1)
+            {
+                client.publish("esp8266/client1/led/green", "On");
+            }
+            else
+            {
+                client.publish("esp8266/client1/led/green", "Off");
+            }
+
+            delay(300); // Debounce delay
+        }
+        Default_Green = Value_Green;
     }
 }
