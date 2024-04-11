@@ -5,8 +5,8 @@
 #include <AHT20.h>
 #include <stdlib.h>
 
-#define Out_Red 13
-#define Out_Green 12
+#define Out_Red 0
+#define Out_Green 2
 
 long lastMsg = 0;
 float temperature = 0;
@@ -139,10 +139,13 @@ void reconnect()
 
 void setup()
 {
-    Serial.begin(115200); // Bắt đầu giao tiếp serial ở tốc độ baud rate 115200.
+    Serial.begin(9600); // Bắt đầu giao tiếp serial ở tốc độ baud rate 115200.
 
     pinMode(Out_Red, OUTPUT);
     pinMode(Out_Green, OUTPUT);
+
+    digitalWrite(Out_Red, LOW);
+    digitalWrite(Out_Green, LOW);
 
     Wire.begin(); // Join I2C bus
 
