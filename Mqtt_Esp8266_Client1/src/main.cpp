@@ -190,9 +190,9 @@ void loop()
             humidity = aht20.getHumidity();
 
             static char temperatureTemp[7];
-            dtostrf(temperature, 6, 2, temperatureTemp); // Chuyển đổi nhiệt độ sang chuỗi ký tự.
+            dtostrf(temperature, 4, 1, temperatureTemp); // Chuyển đổi nhiệt độ sang chuỗi ký tự.
             static char humidityTemp[7];
-            dtostrf(humidity, 6, 2, humidityTemp); // Chuyển đổi độ ẩm sang chuỗi ký tự.
+            dtostrf(humidity, 4, 1, humidityTemp); // Chuyển đổi độ ẩm sang chuỗi ký tự.
 
             // Gửi giá trị nhiệt độ và độ ẩm qua MQTT với các chủ đề tương ứng.
             client.publish("esp8266/client1/aht20/temperature", temperatureTemp);

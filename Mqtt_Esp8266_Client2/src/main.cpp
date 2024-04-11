@@ -86,13 +86,13 @@ void callback(char *topic, byte *message, unsigned int length)
         // Kiểm tra độ dài của messageArray
         int messageLength = strlen(messageArray);
         // Đảm bảo là messageArray có độ dài nhỏ hơn hoặc bằng 6
-        if (messageLength <= 6)
+        if (messageLength <= 4)
         {
             // Khai báo một mảng char[6] để lưu trữ messageArray
-            char messageChar[6];
+            char messageChar[4];
             // Sao chép nội dung từ messageArray sang messageChar
             strcpy(messageChar, messageArray);
-            max7219.DisplayText(messageChar, RIGHT);
+            max7219.DisplayText(messageChar, LEFT);
         }
         else
         {
@@ -107,13 +107,13 @@ void callback(char *topic, byte *message, unsigned int length)
         // Kiểm tra độ dài của messageArray
         int messageLength = strlen(messageArray);
         // Đảm bảo là messageArray có độ dài nhỏ hơn hoặc bằng 6
-        if (messageLength <= 6)
+        if (messageLength <= 4)
         {
             // Khai báo một mảng char[6] để lưu trữ messageArray
-            char messageChar[6];
+            char messageChar[4];
             // Sao chép nội dung từ messageArray sang messageChar
             strcpy(messageChar, messageArray);
-            max7219.DisplayText(messageChar, LEFT);
+            max7219.DisplayText(messageChar, RIGHT);
         }
         else
         {
