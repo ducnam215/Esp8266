@@ -75,7 +75,7 @@ void callback(char *topic, byte *message, unsigned int length)
     Serial.println(); // Kết thúc dòng hiện tại trên cổng Serial.
 
     // Kiểm tra chủ đề của tin nhắn và thực hiện hành động tương ứng.
-    if (strcmp(topic, "esp8266/client1/led/red") == 0)
+    if (strcmp(topic, "esp8266/client2/led/red") == 0)
     {
         Serial.print("Changing Room lamp to ");
         if (messageTemp == "On")
@@ -91,7 +91,7 @@ void callback(char *topic, byte *message, unsigned int length)
     }
 
     // Làm tương tự như trên cho LED xanh lá.
-    if (strcmp(topic, "esp8266/client1/led/green") == 0)
+    if (strcmp(topic, "esp8266/client2/led/green") == 0)
     {
         Serial.print("Changing Room lamp to ");
         if (messageTemp == "On")
@@ -122,8 +122,8 @@ void reconnect()
         {
             Serial.println("connected");
             // Nếu kết nối thành công, đăng ký lại các chủ đề cần thiết.
-            client.subscribe("esp8266/client1/led/red");
-            client.subscribe("esp8266/client1/led/green");
+            client.subscribe("esp8266/client2/led/red");
+            client.subscribe("esp8266/client2/led/green");
         }
         else
         {
@@ -139,7 +139,7 @@ void reconnect()
 
 void setup()
 {
-    Serial.begin(9600); // Bắt đầu giao tiếp serial ở tốc độ baud rate 115200.
+    Serial.begin(115200); // Bắt đầu giao tiếp serial ở tốc độ baud rate 115200.
 
     pinMode(Out_Red, OUTPUT);
     pinMode(Out_Green, OUTPUT);

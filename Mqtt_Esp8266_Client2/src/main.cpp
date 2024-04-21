@@ -154,7 +154,7 @@ void reconnect()
 
 void setup()
 {
-    Serial.begin(9600); // Bắt đầu giao tiếp serial ở tốc độ baud rate 115200.
+    Serial.begin(115200); // Bắt đầu giao tiếp serial ở tốc độ baud rate 115200.
     max7219.Begin();
     pinMode(Btn_Green, INPUT);
     pinMode(Btn_Red, INPUT);
@@ -173,57 +173,57 @@ void loop()
     }
     client.loop(); // Xử lý các gói tin MQTT đến và gửi đi trong thư viện PubSubClient.
 
-    // Value_Red = digitalRead(Btn_Red);
-    // Value_Green = digitalRead(Btn_Green);
+    Value_Red = digitalRead(Btn_Red);
+    Value_Green = digitalRead(Btn_Green);
 
-    // // Check Button Red
-    // if (Value_Red != Default_Red)
-    // {
-    //     if (Value_Red == 1)
-    //     {
-    //         Count_Red++;
-    //         if (Count_Red >= 2)
-    //         {
-    //             Count_Red = 0;
-    //         }
+    // Check Button Red
+    if (Value_Red != Default_Red)
+    {
+        if (Value_Red == 1)
+        {
+            Count_Red++;
+            if (Count_Red >= 2)
+            {
+                Count_Red = 0;
+            }
 
-    //         if (Count_Red == 1)
-    //         {
-    //             client.publish("esp8266/client2/led/red", "On");
-    //         }
-    //         else
-    //         {
-    //             client.publish("esp8266/client2/led/red", "Off");
-    //         }
+            if (Count_Red == 1)
+            {
+                client.publish("esp8266/client2/led/red", "On");
+            }
+            else
+            {
+                client.publish("esp8266/client2/led/red", "Off");
+            }
 
-    //         delay(300); // Debounce delay
-    //     }
-    //     Default_Red = Value_Red;
-    // }
+            delay(300); // Debounce delay
+        }
+        Default_Red = Value_Red;
+    }
 
-    // // Check Button Green
-    // if (Value_Green != Default_Green)
-    // {
-    //     if (Value_Green == 1)
-    //     {
-    //         Count_Green++;
+    // Check Button Green
+    if (Value_Green != Default_Green)
+    {
+        if (Value_Green == 1)
+        {
+            Count_Green++;
 
-    //         if (Count_Green >= 2)
-    //         {
-    //             Count_Green = 0;
-    //         }
+            if (Count_Green >= 2)
+            {
+                Count_Green = 0;
+            }
 
-    //         if (Count_Green == 1)
-    //         {
-    //             client.publish("esp8266/client2/led/green", "On");
-    //         }
-    //         else
-    //         {
-    //             client.publish("esp8266/client2/led/green", "Off");
-    //         }
+            if (Count_Green == 1)
+            {
+                client.publish("esp8266/client2/led/green", "On");
+            }
+            else
+            {
+                client.publish("esp8266/client2/led/green", "Off");
+            }
 
-    //         delay(300); // Debounce delay
-    //     }
-    //     Default_Green = Value_Green;
-    // }
+            delay(300); // Debounce delay
+        }
+        Default_Green = Value_Green;
+    }
 }
